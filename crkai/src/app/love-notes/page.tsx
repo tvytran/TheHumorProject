@@ -4,7 +4,7 @@ import Link from "next/link";
 interface CommunityContext {
   id: number;
   content: string;
-  created_at: string;
+  created_datetime_utc: string;
 }
 
 export const revalidate = 60;
@@ -12,7 +12,7 @@ export const revalidate = 60;
 export default async function LoveNotesPage() {
   const { data: contexts, error } = await supabase
     .from("community_contexts")
-    .select("id, content, created_at")
+    .select("id, content, created_datetime_utc")
     .order("id", { ascending: true })
     .limit(30);
 
@@ -122,7 +122,7 @@ export default async function LoveNotesPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] text-[#e57373]">
-                    {new Date(ctx.created_at).toLocaleDateString()}
+                    {new Date(ctx.created_datetime_utc).toLocaleDateString()}
                   </span>
                   <div className="flex gap-0.5 text-[10px]">
                     {"♥♥♥♥♥".split("").map((h, j) => (
