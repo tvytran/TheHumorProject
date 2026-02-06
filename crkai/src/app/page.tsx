@@ -18,7 +18,7 @@ export default function Home() {
             The Humor Project
           </h1>
           <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Explore humor flavors fetched from Supabase.
+            Explore humor flavors and campus love notes fetched from Supabase.
           </p>
         </div>
         <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
@@ -27,6 +27,12 @@ export default function Home() {
             href="/humor-flavors"
           >
             View Humor Flavors
+          </Link>
+          <Link
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-full border-2 border-[#f48fb1] bg-[#fce4ec] px-5 text-[#c2185b] transition-colors hover:bg-[#f8bbd0] md:w-[200px]"
+            href="/love-notes"
+          >
+            💖 Campus Love Notes
           </Link>
         </div>
       </main>
