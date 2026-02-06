@@ -73,23 +73,31 @@ export default async function LoveNotesPage() {
               Real campus moments from Columbia &amp; Barnard — the
               meet-cutes, the drama, and everything in between.
             </p>
-            <div className="mt-2 inline-block rounded border border-[#f48fb1] bg-[#fce4ec] px-4 py-1 text-xs text-[#c2185b]">
-              {contexts.length} love notes loaded from Supabase ♡
-            </div>
           </div>
         </div>
 
-        {/* Attention banner */}
-        <div className="mb-8 overflow-hidden rounded-lg border-2 border-[#e57373] bg-[#fff5f5] shadow-[4px_4px_0px_#e57373]">
+        {/* Notes count banner */}
+        <div className="mb-4 overflow-hidden rounded-lg border-2 border-[#e57373] bg-[#fff5f5] shadow-[4px_4px_0px_#e57373]">
           <div className="flex items-center gap-2 border-b-2 border-[#e57373] bg-[#f48fb1] px-4 py-2">
-            <span className="text-sm">⚠️</span>
+            <span className="text-sm">💌</span>
             <span className="text-xs font-bold text-[#880e4f]">
               ATTENTION!
             </span>
           </div>
           <div className="px-6 py-4 text-center text-sm font-medium text-[#c2185b]">
-            This message may contain Love 💌
+            {contexts.length} love notes loaded from Supabase ♡
           </div>
+        </div>
+
+        {/* Love Search */}
+        <div className="mb-8 flex items-center justify-center">
+          <div className="flex items-center gap-2 rounded border-2 border-[#e57373] bg-[#fff5f5] px-4 py-2 text-xs text-[#e57373] shadow-[2px_2px_0px_#ef9a9a]">
+            <span>Love Search...</span>
+            <span>🔍</span>
+          </div>
+          <span className="ml-3 rounded border-2 border-[#e57373] bg-[#f48fb1] px-4 py-2 text-xs font-bold text-[#880e4f] shadow-[2px_2px_0px_#e57373]">
+            Start
+          </span>
         </div>
 
         {/* Notes grid */}
@@ -167,16 +175,6 @@ export default async function LoveNotesPage() {
           </div>
         </div>
 
-        {/* Search bar */}
-        <div className="mt-6 flex items-center justify-center">
-          <div className="flex items-center gap-2 rounded border-2 border-[#e57373] bg-[#fff5f5] px-4 py-2 text-xs text-[#e57373] shadow-[2px_2px_0px_#ef9a9a]">
-            <span>Love Search...</span>
-            <span>🔍</span>
-          </div>
-          <span className="ml-3 rounded border-2 border-[#e57373] bg-[#f48fb1] px-4 py-2 text-xs font-bold text-[#880e4f] shadow-[2px_2px_0px_#e57373]">
-            Start
-          </span>
-        </div>
       </main>
     </div>
   );
