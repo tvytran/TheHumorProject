@@ -1,5 +1,8 @@
+"use client";
+
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 interface CommunityContext {
   id: number;
@@ -7,19 +10,46 @@ interface CommunityContext {
   created_datetime_utc: string;
 }
 
-export const revalidate = 60;
+export default function LoveNotesPage() {
+  const [contexts, setContexts] = useState<CommunityContext[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
-export default async function LoveNotesPage() {
-  const { data: contexts, error } = await supabase
-    .from("community_contexts")
-    .select("id, content, created_datetime_utc")
-    .order("id", { ascending: true })
-    .limit(30);
+  useEffect(() => {
+    async function fetchData() {
+      const { data, error } = await supabase
+        .from("community_contexts")
+        .select("id, content, created_datetime_utc")
+        .order("id", { ascending: true })
+        .limit(30);
+
+      if (error) {
+        setError(error.message);
+      } else {
+        setContexts(data ?? []);
+      }
+      setLoading(false);
+    }
+    fetchData();
+  }, []);
+
+  const filtered = contexts.filter((ctx) =>
+    ctx.content.toLowerCase().includes(search.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#fce4ec]">
+        <p className="text-sm text-[#c2185b]">Loading love notes...</p>
+      </div>
+    );
+  }
 
   if (error) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#ffe4ec]">
-        <p className="text-red-500">Failed to load: {error.message}</p>
+        <p className="text-red-500">Failed to load: {error}</p>
       </div>
     );
   }
@@ -73,6 +103,9 @@ export default async function LoveNotesPage() {
               Real campus moments from Columbia &amp; Barnard — the
               meet-cutes, the drama, and everything in between.
             </p>
+            <div className="mt-2 inline-block rounded border border-[#f48fb1] bg-[#fce4ec] px-4 py-1 text-xs text-[#c2185b]">
+              This message may contain Love 💌
+            </div>
           </div>
         </div>
 
@@ -90,19 +123,38 @@ export default async function LoveNotesPage() {
         </div>
 
         {/* Love Search */}
-        <div className="mb-8 flex items-center justify-center">
-          <div className="flex items-center gap-2 rounded border-2 border-[#e57373] bg-[#fff5f5] px-4 py-2 text-xs text-[#e57373] shadow-[2px_2px_0px_#ef9a9a]">
-            <span>Love Search...</span>
-            <span>🔍</span>
+        <div className="mb-8 overflow-hidden rounded-lg border-2 border-[#e57373] bg-[#fff5f5] shadow-[4px_4px_0px_#e57373]">
+          <div className="flex items-center gap-2 border-b-2 border-[#e57373] bg-[#f48fb1] px-4 py-2">
+            <span className="text-sm">🔍</span>
+            <span className="text-xs font-bold text-[#880e4f]">
+              Love Search
+            </span>
           </div>
-          <span className="ml-3 rounded border-2 border-[#e57373] bg-[#f48fb1] px-4 py-2 text-xs font-bold text-[#880e4f] shadow-[2px_2px_0px_#e57373]">
-            Start
-          </span>
+          <div className="flex items-center gap-2 px-4 py-3">
+            <input
+              type="text"
+              placeholder="Search love notes..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="flex-1 rounded border-2 border-[#f48fb1] bg-[#fce4ec] px-4 py-2 text-sm text-[#5d1049] placeholder-[#e57373] outline-none focus:border-[#c2185b]"
+            />
+            <button
+              onClick={() => setSearch("")}
+              className="rounded border-2 border-[#e57373] bg-[#f48fb1] px-4 py-2 text-xs font-bold text-[#880e4f] shadow-[2px_2px_0px_#e57373] transition-colors hover:bg-[#f06292]"
+            >
+              Clear
+            </button>
+          </div>
+          {search && (
+            <div className="border-t border-[#f48fb1] px-4 py-2 text-center text-xs text-[#c2185b]">
+              Showing {filtered.length} of {contexts.length} notes ♡
+            </div>
+          )}
         </div>
 
         {/* Notes grid */}
         <div className="grid gap-5 sm:grid-cols-2">
-          {contexts.map((ctx: CommunityContext, i: number) => (
+          {filtered.map((ctx, i) => (
             <div
               key={ctx.id}
               className="overflow-hidden rounded-lg border-2 border-[#e57373] bg-[#fff5f5] shadow-[3px_3px_0px_#ef9a9a] transition-transform hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#e57373]"
@@ -152,6 +204,12 @@ export default async function LoveNotesPage() {
           ))}
         </div>
 
+        {filtered.length === 0 && search && (
+          <div className="mt-8 text-center text-sm text-[#c2185b]">
+            No love notes match &quot;{search}&quot; 💔
+          </div>
+        )}
+
         {/* Footer window */}
         <div className="mt-10 overflow-hidden rounded-lg border-2 border-[#e57373] bg-[#fff5f5] shadow-[4px_4px_0px_#e57373]">
           <div className="flex items-center gap-2 border-b-2 border-[#e57373] bg-[#f48fb1] px-4 py-2">
@@ -174,7 +232,6 @@ export default async function LoveNotesPage() {
             </div>
           </div>
         </div>
-
       </main>
     </div>
   );
