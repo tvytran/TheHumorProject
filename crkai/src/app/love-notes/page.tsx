@@ -109,19 +109,6 @@ export default function LoveNotesPage() {
           </div>
         </div>
 
-        {/* Notes count banner */}
-        <div className="mb-4 overflow-hidden rounded-lg border-2 border-[#e57373] bg-[#fff5f5] shadow-[4px_4px_0px_#e57373]">
-          <div className="flex items-center gap-2 border-b-2 border-[#e57373] bg-[#f48fb1] px-4 py-2">
-            <span className="text-sm">💌</span>
-            <span className="text-xs font-bold text-[#880e4f]">
-              ATTENTION!
-            </span>
-          </div>
-          <div className="px-6 py-4 text-center text-sm font-medium text-[#c2185b]">
-            {contexts.length} love notes loaded from Supabase ♡
-          </div>
-        </div>
-
         {/* Love Search */}
         <div className="mb-8 overflow-hidden rounded-lg border-2 border-[#e57373] bg-[#fff5f5] shadow-[4px_4px_0px_#e57373]">
           <div className="flex items-center gap-2 border-b-2 border-[#e57373] bg-[#f48fb1] px-4 py-2">
