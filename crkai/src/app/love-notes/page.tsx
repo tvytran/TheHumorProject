@@ -1,8 +1,9 @@
 "use client";
 
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 
 interface CommunityContext {
   id: number;
@@ -15,9 +16,15 @@ export default function LoveNotesPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [user, setUser] = useState<User | null>(null);
+
+  const supabase = createClient();
 
   useEffect(() => {
-    async function fetchData() {
+    async function init() {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+
       const { data, error } = await supabase
         .from("community_contexts")
         .select("id, content, created_datetime_utc")
@@ -31,8 +38,13 @@ export default function LoveNotesPage() {
       }
       setLoading(false);
     }
-    fetchData();
-  }, []);
+    init();
+  }, [supabase]);
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  }
 
   const filtered = contexts.filter((ctx) =>
     ctx.content.toLowerCase().includes(search.toLowerCase())
@@ -74,13 +86,28 @@ export default function LoveNotesPage() {
       </div>
 
       <main className="relative mx-auto max-w-3xl px-4 py-10 sm:px-8">
-        {/* Back link */}
-        <Link
-          href="/"
-          className="mb-6 inline-block text-sm text-[#c2185b] hover:text-[#880e4f]"
-        >
-          &larr; Back to home
-        </Link>
+        {/* Back link + user info */}
+        <div className="mb-6 flex items-center justify-between">
+          <Link
+            href="/"
+            className="text-sm text-[#c2185b] hover:text-[#880e4f]"
+          >
+            &larr; Back to home
+          </Link>
+          {user && (
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-[#ad1457]">
+                {user.user_metadata?.full_name || user.email}
+              </span>
+              <button
+                onClick={handleSignOut}
+                className="rounded border-2 border-[#e57373] bg-[#f48fb1] px-3 py-1 text-xs font-bold text-[#880e4f] shadow-[2px_2px_0px_#e57373] transition-colors hover:bg-[#f06292]"
+              >
+                Sign out
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Hero window */}
         <div className="mb-8 overflow-hidden rounded-lg border-2 border-[#e57373] bg-[#fff5f5] shadow-[4px_4px_0px_#e57373]">

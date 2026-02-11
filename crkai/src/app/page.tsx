@@ -1,6 +1,25 @@
+"use client";
+
+import { createClient } from "@/lib/supabase";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 
 export default function Home() {
+  const [user, setUser] = useState<User | null>(null);
+  const supabase = createClient();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+  }, [supabase]);
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    setUser(null);
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-white font-sans dark:bg-[#0a0a0a]">
       {/* Nav */}
@@ -15,6 +34,21 @@ export default function Home() {
           <Link href="/love-notes" className="hover:text-black dark:hover:text-white transition-colors">
             Love Notes
           </Link>
+          {user ? (
+            <button
+              onClick={handleSignOut}
+              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
+            >
+              Sign out
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              className="rounded-lg bg-black px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+            >
+              Sign in
+            </Link>
+          )}
         </div>
       </nav>
 
