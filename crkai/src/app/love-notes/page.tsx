@@ -104,29 +104,25 @@ export default function LoveNotesPage() {
 
     const existing = userVotes[captionId];
 
-    // If clicking the same vote again, do nothing (or you could remove it)
     if (existing === vote) {
       setVotingId(null);
       return;
     }
 
-    const res = await fetch("/api/votes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ caption_id: captionId, vote }),
+    const { error } = await supabase.from("caption_votes").insert({
+      caption_id: captionId,
+      vote,
+      user_id: user.id,
     });
 
-    if (res.ok) {
-      // Update local vote counts and user vote state
+    if (!error) {
       setVoteCounts((prev) => {
         const updated = { ...prev };
         const counts = { ...(updated[captionId] ?? { upvotes: 0, downvotes: 0 }) };
 
-        // Subtract previous vote if any
         if (existing === "upvote") counts.upvotes = Math.max(0, counts.upvotes - 1);
         if (existing === "downvote") counts.downvotes = Math.max(0, counts.downvotes - 1);
 
-        // Add new vote
         if (vote === "upvote") counts.upvotes++;
         else counts.downvotes++;
 
