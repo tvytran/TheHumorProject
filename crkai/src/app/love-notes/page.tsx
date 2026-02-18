@@ -108,10 +108,13 @@ export default function LoveNotesPage() {
       return;
     }
 
+    const now = new Date().toISOString();
     const { error } = await supabase.from("caption_votes").insert({
       caption_id: captionId,
       vote_value: voteValue,
       profile_id: user.id,
+      created_datetime_utc: now,
+      modified_datetime_utc: now,
     });
 
     if (error) {
