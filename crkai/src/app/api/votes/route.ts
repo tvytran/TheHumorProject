@@ -4,7 +4,6 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   const supabase = await createClient();
 
-  // Verify the user is authenticated
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -14,16 +13,16 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { caption_id, vote } = body;
+  const { caption_id, vote_value } = body;
 
-  if (!caption_id || !vote || !["upvote", "downvote"].includes(vote)) {
+  if (!caption_id || ![1, -1].includes(vote_value)) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
   const { data, error } = await supabase.from("caption_votes").insert({
     caption_id,
-    vote,
-    user_id: user.id,
+    vote_value,
+    profile_id: user.id,
   });
 
   if (error) {
