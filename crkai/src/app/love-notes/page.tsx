@@ -11,18 +11,31 @@ interface CommunityContext {
   created_datetime_utc: string;
 }
 
+interface VoteCounts {
+  [captionId: number]: { upvotes: number; downvotes: number };
+}
+
+interface UserVotes {
+  [captionId: number]: "upvote" | "downvote" | null;
+}
+
 export default function LoveNotesPage() {
   const [contexts, setContexts] = useState<CommunityContext[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [user, setUser] = useState<User | null>(null);
+  const [voteCounts, setVoteCounts] = useState<VoteCounts>({});
+  const [userVotes, setUserVotes] = useState<UserVotes>({});
+  const [votingId, setVotingId] = useState<number | null>(null);
 
   const supabase = createClient();
 
   useEffect(() => {
     async function init() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       setUser(user);
 
       const { data, error } = await supabase
@@ -33,9 +46,46 @@ export default function LoveNotesPage() {
 
       if (error) {
         setError(error.message);
-      } else {
-        setContexts(data ?? []);
+        setLoading(false);
+        return;
       }
+
+      setContexts(data ?? []);
+
+      // Fetch vote counts for all captions
+      const ids = (data ?? []).map((c) => c.id);
+      if (ids.length > 0) {
+        const { data: votes } = await supabase
+          .from("caption_votes")
+          .select("caption_id, vote")
+          .in("caption_id", ids);
+
+        const counts: VoteCounts = {};
+        for (const id of ids) {
+          counts[id] = { upvotes: 0, downvotes: 0 };
+        }
+        for (const v of votes ?? []) {
+          if (v.vote === "upvote") counts[v.caption_id].upvotes++;
+          else if (v.vote === "downvote") counts[v.caption_id].downvotes++;
+        }
+        setVoteCounts(counts);
+
+        // If logged in, fetch this user's votes
+        if (user) {
+          const { data: myVotes } = await supabase
+            .from("caption_votes")
+            .select("caption_id, vote")
+            .eq("user_id", user.id)
+            .in("caption_id", ids);
+
+          const uv: UserVotes = {};
+          for (const v of myVotes ?? []) {
+            uv[v.caption_id] = v.vote;
+          }
+          setUserVotes(uv);
+        }
+      }
+
       setLoading(false);
     }
     init();
@@ -44,6 +94,49 @@ export default function LoveNotesPage() {
   async function handleSignOut() {
     await supabase.auth.signOut();
     window.location.href = "/";
+  }
+
+  async function handleVote(captionId: number, vote: "upvote" | "downvote") {
+    if (!user) return;
+    if (votingId === captionId) return;
+
+    setVotingId(captionId);
+
+    const existing = userVotes[captionId];
+
+    // If clicking the same vote again, do nothing (or you could remove it)
+    if (existing === vote) {
+      setVotingId(null);
+      return;
+    }
+
+    const res = await fetch("/api/votes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ caption_id: captionId, vote }),
+    });
+
+    if (res.ok) {
+      // Update local vote counts and user vote state
+      setVoteCounts((prev) => {
+        const updated = { ...prev };
+        const counts = { ...(updated[captionId] ?? { upvotes: 0, downvotes: 0 }) };
+
+        // Subtract previous vote if any
+        if (existing === "upvote") counts.upvotes = Math.max(0, counts.upvotes - 1);
+        if (existing === "downvote") counts.downvotes = Math.max(0, counts.downvotes - 1);
+
+        // Add new vote
+        if (vote === "upvote") counts.upvotes++;
+        else counts.downvotes++;
+
+        updated[captionId] = counts;
+        return updated;
+      });
+      setUserVotes((prev) => ({ ...prev, [captionId]: vote }));
+    }
+
+    setVotingId(null);
   }
 
   const filtered = contexts.filter((ctx) =>
@@ -133,6 +226,14 @@ export default function LoveNotesPage() {
             <div className="mt-2 inline-block rounded border border-[#f48fb1] bg-[#fce4ec] px-4 py-1 text-xs text-[#c2185b]">
               This message may contain Love 💌
             </div>
+            {!user && (
+              <div className="mt-1 inline-block rounded border border-[#e57373] bg-[#fce4ec] px-4 py-1 text-xs text-[#880e4f]">
+                <Link href="/login" className="underline hover:text-[#c2185b]">
+                  Sign in
+                </Link>{" "}
+                to rate notes!
+              </div>
+            )}
           </div>
         </div>
 
@@ -168,54 +269,79 @@ export default function LoveNotesPage() {
 
         {/* Notes grid */}
         <div className="grid gap-5 sm:grid-cols-2">
-          {filtered.map((ctx, i) => (
-            <div
-              key={ctx.id}
-              className="overflow-hidden rounded-lg border-2 border-[#e57373] bg-[#fff5f5] shadow-[3px_3px_0px_#ef9a9a] transition-transform hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#e57373]"
-            >
-              {/* Mini title bar */}
-              <div className="flex items-center justify-between border-b-2 border-[#e57373] bg-[#f48fb1] px-3 py-1.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-[#ef9a9a]" />
-                  <span className="h-2 w-2 rounded-full bg-[#ef9a9a]" />
-                  <span className="h-2 w-2 rounded-full bg-[#ef9a9a]" />
-                </div>
-                <span className="text-[10px] font-bold text-[#880e4f]">
-                  note #{ctx.id}
-                </span>
-              </div>
-              {/* Body */}
-              <div className="px-4 py-4">
-                <div className="mb-3 flex items-start gap-2">
-                  <span className="mt-0.5 text-lg">
-                    {["💕", "💘", "💌", "🌸", "💗", "✨", "💝", "🎀"][i % 8]}
+          {filtered.map((ctx, i) => {
+            const counts = voteCounts[ctx.id] ?? { upvotes: 0, downvotes: 0 };
+            const myVote = userVotes[ctx.id] ?? null;
+            const isVoting = votingId === ctx.id;
+
+            return (
+              <div
+                key={ctx.id}
+                className="overflow-hidden rounded-lg border-2 border-[#e57373] bg-[#fff5f5] shadow-[3px_3px_0px_#ef9a9a] transition-transform hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#e57373]"
+              >
+                {/* Mini title bar */}
+                <div className="flex items-center justify-between border-b-2 border-[#e57373] bg-[#f48fb1] px-3 py-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-[#ef9a9a]" />
+                    <span className="h-2 w-2 rounded-full bg-[#ef9a9a]" />
+                    <span className="h-2 w-2 rounded-full bg-[#ef9a9a]" />
+                  </div>
+                  <span className="text-[10px] font-bold text-[#880e4f]">
+                    note #{ctx.id}
                   </span>
-                  <p className="text-sm leading-relaxed text-[#5d1049]">
-                    {ctx.content}
-                  </p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-[#e57373]">
-                    {new Date(ctx.created_datetime_utc).toLocaleDateString()}
-                  </span>
-                  <div className="flex gap-0.5 text-[10px]">
-                    {"♥♥♥♥♥".split("").map((h, j) => (
-                      <span
-                        key={j}
-                        className={
-                          j < 3 + (i % 3)
-                            ? "text-[#e57373]"
-                            : "text-[#f8bbd0]"
-                        }
+                {/* Body */}
+                <div className="px-4 py-4">
+                  <div className="mb-3 flex items-start gap-2">
+                    <span className="mt-0.5 text-lg">
+                      {["💕", "💘", "💌", "🌸", "💗", "✨", "💝", "🎀"][i % 8]}
+                    </span>
+                    <p className="text-sm leading-relaxed text-[#5d1049]">
+                      {ctx.content}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-[#e57373]">
+                      {new Date(ctx.created_datetime_utc).toLocaleDateString()}
+                    </span>
+                    {/* Vote buttons */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleVote(ctx.id, "upvote")}
+                        disabled={!user || isVoting}
+                        title={user ? "Upvote" : "Sign in to vote"}
+                        className={`flex items-center gap-1 rounded border px-2 py-0.5 text-[11px] font-bold transition-colors ${
+                          myVote === "upvote"
+                            ? "border-[#c2185b] bg-[#c2185b] text-white"
+                            : user
+                            ? "border-[#e57373] bg-[#fce4ec] text-[#c2185b] hover:bg-[#f48fb1]"
+                            : "cursor-not-allowed border-[#f8bbd0] bg-[#fce4ec] text-[#f48fb1]"
+                        }`}
                       >
-                        {h}
-                      </span>
-                    ))}
+                        <span>▲</span>
+                        <span>{counts.upvotes}</span>
+                      </button>
+                      <button
+                        onClick={() => handleVote(ctx.id, "downvote")}
+                        disabled={!user || isVoting}
+                        title={user ? "Downvote" : "Sign in to vote"}
+                        className={`flex items-center gap-1 rounded border px-2 py-0.5 text-[11px] font-bold transition-colors ${
+                          myVote === "downvote"
+                            ? "border-[#880e4f] bg-[#880e4f] text-white"
+                            : user
+                            ? "border-[#e57373] bg-[#fce4ec] text-[#c2185b] hover:bg-[#f48fb1]"
+                            : "cursor-not-allowed border-[#f8bbd0] bg-[#fce4ec] text-[#f48fb1]"
+                        }`}
+                      >
+                        <span>▼</span>
+                        <span>{counts.downvotes}</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {filtered.length === 0 && search && (
