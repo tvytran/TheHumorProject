@@ -34,6 +34,9 @@ export default function Home() {
           <Link href="/love-notes" className="hover:text-black dark:hover:text-white transition-colors">
             Love Notes
           </Link>
+          <Link href="/generate" className="hover:text-black dark:hover:text-white transition-colors">
+            Generate
+          </Link>
           {user ? (
             <button
               onClick={handleSignOut}
@@ -127,6 +130,27 @@ export default function Home() {
             </p>
             <span className="mt-3 inline-flex items-center gap-1 text-sm text-zinc-400 group-hover:text-black dark:group-hover:text-white transition-colors">
               View flavors
+              <span className="transition-transform group-hover:translate-x-0.5">&rarr;</span>
+            </span>
+          </Link>
+
+          {/* Generate Captions Card */}
+          <Link
+            href="/generate"
+            className="group rounded-xl border border-zinc-200 p-6 transition-all hover:border-zinc-300 hover:shadow-sm dark:border-zinc-800 dark:hover:border-zinc-700 sm:col-span-2"
+          >
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-lg dark:bg-amber-950">
+              📷
+            </div>
+            <h3 className="text-base font-semibold text-black dark:text-white">
+              Generate Captions
+            </h3>
+            <p className="mt-1 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
+              Upload an image and get AI-generated humor captions instantly.
+              Sign in to try it out.
+            </p>
+            <span className="mt-3 inline-flex items-center gap-1 text-sm text-zinc-400 group-hover:text-black dark:group-hover:text-white transition-colors">
+              Try it now
               <span className="transition-transform group-hover:translate-x-0.5">&rarr;</span>
             </span>
           </Link>
