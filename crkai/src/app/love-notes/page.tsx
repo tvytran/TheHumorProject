@@ -146,7 +146,7 @@ export default function LoveNotesPage() {
   }
 
   const filtered = captions.filter((c) =>
-    c.content.toLowerCase().includes(search.toLowerCase())
+    (c.content ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
   if (loading) {
@@ -294,7 +294,7 @@ export default function LoveNotesPage() {
                       {["💕", "💘", "💌", "🌸", "💗", "✨", "💝", "🎀"][i % 8]}
                     </span>
                     <p className="text-sm leading-relaxed text-[#5d1049]">
-                      {caption.content}
+                      {caption.content ?? ""}
                     </p>
                   </div>
                   <div className="flex items-center justify-between">
