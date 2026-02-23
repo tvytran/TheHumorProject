@@ -55,40 +55,46 @@ export default function LoveNotesPage() {
 
       const ids = (data ?? []).map((c) => c.id);
       if (ids.length > 0) {
-        const { data: votes } = await supabase
-          .from("caption_votes")
-          .select("caption_id, vote_value")
-          .in("caption_id", ids);
-
-        const counts: VoteCounts = {};
-        for (const id of ids) {
-          counts[id] = { upvotes: 0, downvotes: 0 };
-        }
-        for (const v of votes ?? []) {
-          if (v.vote_value === 1) counts[v.caption_id].upvotes++;
-          else if (v.vote_value === -1) counts[v.caption_id].downvotes++;
-        }
-        setVoteCounts(counts);
-
-        if (user) {
-          const { data: myVotes } = await supabase
+        try {
+          const { data: votes } = await supabase
             .from("caption_votes")
             .select("caption_id, vote_value")
-            .eq("profile_id", user.id)
             .in("caption_id", ids);
 
-          const uv: UserVotes = {};
-          for (const v of myVotes ?? []) {
-            uv[v.caption_id] = v.vote_value;
+          const counts: VoteCounts = {};
+          for (const id of ids) {
+            counts[id] = { upvotes: 0, downvotes: 0 };
           }
-          setUserVotes(uv);
+          for (const v of votes ?? []) {
+            if (counts[v.caption_id]) {
+              if (v.vote_value === 1) counts[v.caption_id].upvotes++;
+              else if (v.vote_value === -1) counts[v.caption_id].downvotes++;
+            }
+          }
+          setVoteCounts(counts);
+
+          if (user) {
+            const { data: myVotes } = await supabase
+              .from("caption_votes")
+              .select("caption_id, vote_value")
+              .eq("profile_id", user.id)
+              .in("caption_id", ids);
+
+            const uv: UserVotes = {};
+            for (const v of myVotes ?? []) {
+              uv[v.caption_id] = v.vote_value;
+            }
+            setUserVotes(uv);
+          }
+        } catch (e) {
+          console.error("Failed to load votes:", e);
         }
       }
 
       setLoading(false);
     }
     init();
-  }, [supabase]);
+  }, []);
 
   async function handleSignOut() {
     await supabase.auth.signOut();

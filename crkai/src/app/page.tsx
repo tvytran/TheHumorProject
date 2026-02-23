@@ -13,7 +13,7 @@ export default function Home() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
     });
-  }, [supabase]);
+  }, []);
 
   async function handleSignOut() {
     await supabase.auth.signOut();

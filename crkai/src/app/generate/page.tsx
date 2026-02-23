@@ -49,7 +49,7 @@ export default function GeneratePage() {
       }
     }
     init();
-  }, [supabase]);
+  }, []);
 
   async function handleSignOut() {
     await supabase.auth.signOut();
