@@ -21,33 +21,50 @@ export default function Home() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-white font-sans dark:bg-[#0a0a0a]">
+    <div className="flex min-h-screen flex-col bg-[#fff0f3] font-sans">
+      {/* Floating hearts background */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        {Array.from({ length: 15 }).map((_, i) => (
+          <span
+            key={i}
+            className="absolute text-pink-200 opacity-30"
+            style={{
+              left: `${(i * 41) % 100}%`,
+              top: `${(i * 57) % 100}%`,
+              fontSize: `${12 + (i % 4) * 8}px`,
+            }}
+          >
+            {i % 4 === 0 ? "♥" : i % 4 === 1 ? "✦" : i % 4 === 2 ? "♡" : "✧"}
+          </span>
+        ))}
+      </div>
+
       {/* Nav */}
-      <nav className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-6">
-        <span className="text-sm font-semibold tracking-tight text-black dark:text-white">
+      <nav className="relative z-10 mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-6">
+        <span className="text-sm font-bold tracking-tight text-[#be185d]">
           The Humor Project
         </span>
-        <div className="flex items-center gap-4 text-sm text-zinc-500 dark:text-zinc-400">
-          <Link href="/humor-flavors" className="hover:text-black dark:hover:text-white transition-colors">
+        <div className="flex items-center gap-4 text-sm text-[#db2777]">
+          <Link href="/humor-flavors" className="hover:text-[#9d174d] transition-colors">
             Flavors
           </Link>
-          <Link href="/love-notes" className="hover:text-black dark:hover:text-white transition-colors">
-            Love Notes
+          <Link href="/love-notes" className="hover:text-[#9d174d] transition-colors">
+            Vote
           </Link>
-          <Link href="/generate" className="hover:text-black dark:hover:text-white transition-colors">
-            Generate
+          <Link href="/generate" className="hover:text-[#9d174d] transition-colors">
+            Create
           </Link>
           {user ? (
             <button
               onClick={handleSignOut}
-              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
+              className="rounded-full border-2 border-pink-300 bg-white px-4 py-1.5 text-sm font-medium text-[#be185d] transition-colors hover:bg-pink-50"
             >
               Sign out
             </button>
           ) : (
             <Link
               href="/login"
-              className="rounded-lg bg-black px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+              className="rounded-full bg-[#ec4899] px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#db2777] shadow-md shadow-pink-200"
             >
               Sign in
             </Link>
@@ -56,114 +73,112 @@ export default function Home() {
       </nav>
 
       {/* Hero */}
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center px-6 text-center">
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-          Powered by Supabase
+      <main className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center px-6 text-center">
+        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-pink-200 bg-white/70 px-4 py-1.5 text-xs text-[#db2777] backdrop-blur-sm">
+          <span className="h-2 w-2 rounded-full bg-pink-400 animate-pulse" />
+          Powered by Supabase + AI
         </div>
 
-        <h1 className="max-w-2xl text-4xl font-bold leading-tight tracking-tight text-black sm:text-5xl lg:text-6xl dark:text-white">
+        <h1 className="max-w-2xl text-4xl font-bold leading-tight tracking-tight text-[#9d174d] sm:text-5xl lg:text-6xl">
           Campus humor,
           <br />
-          <span className="text-zinc-400 dark:text-zinc-500">served fresh.</span>
+          <span className="text-[#f472a8]">served fresh.</span>
         </h1>
 
-        <p className="mt-6 max-w-lg text-base leading-relaxed text-zinc-500 dark:text-zinc-400">
+        <p className="mt-6 max-w-lg text-base leading-relaxed text-[#be185d]/70">
           A collection of humor flavors and real campus moments from
           Columbia &amp; Barnard, fetched live from Supabase.
         </p>
 
-        <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+        {/* Main Action Tabs */}
+        <div className="mt-10 flex flex-col gap-4 sm:flex-row">
           <Link
             href="/love-notes"
-            className="flex h-11 items-center justify-center rounded-lg bg-black px-6 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+            className="group flex h-12 items-center justify-center gap-2 rounded-full bg-[#ec4899] px-8 text-sm font-semibold text-white transition-all hover:bg-[#db2777] shadow-lg shadow-pink-300/40 hover:shadow-pink-400/50 hover:scale-105"
           >
-            View Love Notes
+            <span>💖</span> Vote on Captions
           </Link>
           <Link
-            href="/humor-flavors"
-            className="flex h-11 items-center justify-center rounded-lg border border-zinc-200 px-6 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
+            href="/generate"
+            className="group flex h-12 items-center justify-center gap-2 rounded-full border-2 border-pink-300 bg-white px-8 text-sm font-semibold text-[#be185d] transition-all hover:bg-pink-50 hover:border-pink-400 hover:scale-105"
           >
-            Explore Flavors
+            <span>📷</span> Create a Caption
           </Link>
         </div>
       </main>
 
       {/* Feature Cards */}
-      <section className="mx-auto w-full max-w-5xl px-6 pb-20 pt-16">
-        <div className="grid gap-4 sm:grid-cols-2">
-          {/* Love Notes Card */}
+      <section className="relative z-10 mx-auto w-full max-w-5xl px-6 pb-20 pt-16">
+        <div className="grid gap-5 sm:grid-cols-3">
+          {/* Vote Card */}
           <Link
             href="/love-notes"
-            className="group rounded-xl border border-zinc-200 p-6 transition-all hover:border-zinc-300 hover:shadow-sm dark:border-zinc-800 dark:hover:border-zinc-700"
+            className="group rounded-2xl border-2 border-pink-200 bg-white/80 p-6 backdrop-blur-sm transition-all hover:border-pink-400 hover:shadow-lg hover:shadow-pink-200/50 hover:-translate-y-1"
           >
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-pink-50 text-lg dark:bg-pink-950">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-pink-100 text-xl">
               💖
             </div>
-            <h3 className="text-base font-semibold text-black dark:text-white">
-              Campus Love Notes
+            <h3 className="text-base font-bold text-[#9d174d]">
+              Vote on Captions
             </h3>
-            <p className="mt-1 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
-              Real campus moments — the meet-cutes, the drama, and everything
-              in between. With a retro Y2K aesthetic.
+            <p className="mt-1 text-sm leading-relaxed text-[#be185d]/60">
+              See one caption at a time and vote it up or down. Swipe through campus moments.
             </p>
-            <span className="mt-3 inline-flex items-center gap-1 text-sm text-zinc-400 group-hover:text-black dark:group-hover:text-white transition-colors">
-              Browse notes
-              <span className="transition-transform group-hover:translate-x-0.5">&rarr;</span>
+            <span className="mt-3 inline-flex items-center gap-1 text-sm text-pink-400 group-hover:text-[#db2777] transition-colors">
+              Start voting
+              <span className="transition-transform group-hover:translate-x-1">&rarr;</span>
             </span>
           </Link>
 
-          {/* Humor Flavors Card */}
-          <Link
-            href="/humor-flavors"
-            className="group rounded-xl border border-zinc-200 p-6 transition-all hover:border-zinc-300 hover:shadow-sm dark:border-zinc-800 dark:hover:border-zinc-700"
-          >
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-violet-50 text-lg dark:bg-violet-950">
-              🎭
-            </div>
-            <h3 className="text-base font-semibold text-black dark:text-white">
-              Humor Flavors
-            </h3>
-            <p className="mt-1 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
-              Explore distinct humor personalities — from Gigachad to
-              Dwight Schrute. Each flavor has its own comedic style.
-            </p>
-            <span className="mt-3 inline-flex items-center gap-1 text-sm text-zinc-400 group-hover:text-black dark:group-hover:text-white transition-colors">
-              View flavors
-              <span className="transition-transform group-hover:translate-x-0.5">&rarr;</span>
-            </span>
-          </Link>
-
-          {/* Generate Captions Card */}
+          {/* Create Card */}
           <Link
             href="/generate"
-            className="group rounded-xl border border-zinc-200 p-6 transition-all hover:border-zinc-300 hover:shadow-sm dark:border-zinc-800 dark:hover:border-zinc-700 sm:col-span-2"
+            className="group rounded-2xl border-2 border-pink-200 bg-white/80 p-6 backdrop-blur-sm transition-all hover:border-pink-400 hover:shadow-lg hover:shadow-pink-200/50 hover:-translate-y-1"
           >
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-lg dark:bg-amber-950">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-pink-100 text-xl">
               📷
             </div>
-            <h3 className="text-base font-semibold text-black dark:text-white">
-              Generate Captions
+            <h3 className="text-base font-bold text-[#9d174d]">
+              Create a Caption
             </h3>
-            <p className="mt-1 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
-              Upload an image and get AI-generated humor captions instantly.
-              Sign in to try it out.
+            <p className="mt-1 text-sm leading-relaxed text-[#be185d]/60">
+              Upload a photo and get AI-generated humor captions instantly. Sign in to try it.
             </p>
-            <span className="mt-3 inline-flex items-center gap-1 text-sm text-zinc-400 group-hover:text-black dark:group-hover:text-white transition-colors">
+            <span className="mt-3 inline-flex items-center gap-1 text-sm text-pink-400 group-hover:text-[#db2777] transition-colors">
               Try it now
-              <span className="transition-transform group-hover:translate-x-0.5">&rarr;</span>
+              <span className="transition-transform group-hover:translate-x-1">&rarr;</span>
+            </span>
+          </Link>
+
+          {/* Flavors Card */}
+          <Link
+            href="/humor-flavors"
+            className="group rounded-2xl border-2 border-pink-200 bg-white/80 p-6 backdrop-blur-sm transition-all hover:border-pink-400 hover:shadow-lg hover:shadow-pink-200/50 hover:-translate-y-1"
+          >
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-pink-100 text-xl">
+              🎭
+            </div>
+            <h3 className="text-base font-bold text-[#9d174d]">
+              Humor Flavors
+            </h3>
+            <p className="mt-1 text-sm leading-relaxed text-[#be185d]/60">
+              Explore distinct comedy personalities from Supabase — each with its own unique style.
+            </p>
+            <span className="mt-3 inline-flex items-center gap-1 text-sm text-pink-400 group-hover:text-[#db2777] transition-colors">
+              View flavors
+              <span className="transition-transform group-hover:translate-x-1">&rarr;</span>
             </span>
           </Link>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="mx-auto w-full max-w-5xl border-t border-zinc-100 px-6 py-6 dark:border-zinc-900">
+      <footer className="relative z-10 mx-auto w-full max-w-5xl border-t border-pink-200 px-6 py-6">
         <div className="flex flex-col items-center justify-between gap-2 sm:flex-row">
-          <span className="text-xs text-zinc-400 dark:text-zinc-600">
+          <span className="text-xs text-[#db2777]/50">
             The Humor Project &mdash; Columbia &amp; Barnard
           </span>
-          <span className="text-xs text-zinc-400 dark:text-zinc-600">
+          <span className="text-xs text-[#db2777]/50">
             Built with Next.js &amp; Supabase
           </span>
         </div>

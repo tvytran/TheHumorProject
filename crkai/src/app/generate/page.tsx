@@ -152,24 +152,38 @@ export default function GeneratePage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 font-sans dark:bg-[#0a0a0a]">
-      <main className="mx-auto max-w-2xl px-4 py-10 sm:px-8">
-        {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <Link
-            href="/"
-            className="text-sm text-zinc-500 hover:text-black dark:hover:text-white"
+    <div className="min-h-screen bg-[#fff0f3] font-sans">
+      {/* Hearts background */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <span
+            key={i}
+            className="absolute text-pink-200 opacity-20"
+            style={{
+              left: `${(i * 41) % 100}%`,
+              top: `${(i * 57) % 100}%`,
+              fontSize: `${12 + (i % 4) * 8}px`,
+            }}
           >
-            &larr; Back to home
+            {i % 3 === 0 ? "♥" : i % 3 === 1 ? "✦" : "♡"}
+          </span>
+        ))}
+      </div>
+
+      <main className="relative mx-auto flex min-h-screen max-w-lg flex-col px-4 py-8 sm:px-8">
+        {/* Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <Link href="/" className="text-sm font-medium text-[#db2777] hover:text-[#9d174d]">
+            &larr; Home
           </Link>
           {user && (
             <div className="flex items-center gap-3">
-              <span className="text-xs text-zinc-500">
+              <span className="text-xs text-[#be185d]">
                 {user.user_metadata?.full_name || user.email}
               </span>
               <button
                 onClick={handleSignOut}
-                className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-800 dark:hover:bg-zinc-900"
+                className="rounded-full border-2 border-pink-300 bg-white px-3 py-1 text-xs font-bold text-[#be185d] transition-colors hover:bg-pink-50"
               >
                 Sign out
               </button>
@@ -178,67 +192,81 @@ export default function GeneratePage() {
         </div>
 
         {/* Title */}
-        <h1 className="mb-2 text-3xl font-bold tracking-tight text-black dark:text-white">
-          Generate Captions
-        </h1>
-        <p className="mb-8 text-sm text-zinc-500 dark:text-zinc-400">
-          Upload an image and get AI-generated humor captions.
-        </p>
+        <div className="mb-8 text-center">
+          <span className="text-4xl">📷</span>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-[#9d174d] sm:text-3xl">
+            Create a Caption
+          </h1>
+          <p className="mt-1 text-sm text-[#be185d]/60">
+            Upload a photo and get AI-generated humor captions
+          </p>
+        </div>
 
         {/* Upload area */}
-        <div className="mb-6 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={ALLOWED_TYPES.join(",")}
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-
-          {preview ? (
-            <div className="flex flex-col items-center gap-4">
-              <img
-                src={preview}
-                alt="Selected image"
-                className="max-h-64 rounded-lg object-contain"
-              />
-              <button
-                onClick={() => {
-                  setFile(null);
-                  setPreview(null);
-                  setCaptions([]);
-                  setError(null);
-                  if (fileInputRef.current) fileInputRef.current.value = "";
-                }}
-                className="text-xs text-zinc-500 hover:text-black dark:hover:text-white"
-              >
-                Remove image
-              </button>
+        <div className="mb-5 overflow-hidden rounded-2xl border-2 border-pink-300 bg-white shadow-lg shadow-pink-200/30">
+          <div className="flex items-center justify-between border-b-2 border-pink-200 bg-gradient-to-r from-pink-100 to-pink-50 px-5 py-3">
+            <div className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-pink-300" />
+              <span className="h-3 w-3 rounded-full bg-pink-200" />
+              <span className="h-3 w-3 rounded-full bg-pink-100" />
             </div>
-          ) : (
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="flex w-full flex-col items-center gap-2 rounded-lg border-2 border-dashed border-zinc-300 py-12 text-zinc-400 transition-colors hover:border-zinc-400 hover:text-zinc-600 dark:border-zinc-700 dark:hover:border-zinc-500"
-            >
-              <span className="text-3xl">📷</span>
-              <span className="text-sm font-medium">
-                Click to select an image
-              </span>
-              <span className="text-xs">
-                JPEG, PNG, WebP, GIF, or HEIC
-              </span>
-            </button>
-          )}
+            <span className="text-xs font-bold text-[#be185d]">upload.exe</span>
+          </div>
+
+          <div className="p-6">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={ALLOWED_TYPES.join(",")}
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+
+            {preview ? (
+              <div className="flex flex-col items-center gap-4">
+                <img
+                  src={preview}
+                  alt="Selected image"
+                  className="max-h-64 rounded-xl object-contain"
+                />
+                <button
+                  onClick={() => {
+                    setFile(null);
+                    setPreview(null);
+                    setCaptions([]);
+                    setError(null);
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                  }}
+                  className="text-xs text-[#db2777] hover:text-[#9d174d] underline"
+                >
+                  Remove image
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex w-full flex-col items-center gap-3 rounded-xl border-2 border-dashed border-pink-300 py-12 text-pink-400 transition-colors hover:border-pink-400 hover:text-[#db2777] hover:bg-pink-50/50"
+              >
+                <span className="text-4xl">📷</span>
+                <span className="text-sm font-semibold">
+                  Click to select an image
+                </span>
+                <span className="text-xs text-pink-300">
+                  JPEG, PNG, WebP, GIF, or HEIC
+                </span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Generate button */}
         <button
           onClick={handleGenerate}
           disabled={!file || loading}
-          className={`mb-6 w-full rounded-lg px-6 py-3 text-sm font-semibold transition-colors ${
+          className={`mb-5 w-full rounded-full px-6 py-3.5 text-sm font-bold transition-all ${
             file && !loading
-              ? "bg-black text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
-              : "cursor-not-allowed bg-zinc-200 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-600"
+              ? "bg-[#ec4899] text-white hover:bg-[#db2777] shadow-lg shadow-pink-300/40 hover:shadow-pink-400/50 hover:scale-[1.02]"
+              : "cursor-not-allowed bg-pink-200 text-pink-400"
           }`}
         >
           {loading ? status || "Processing..." : "Generate Captions"}
@@ -246,31 +274,66 @@ export default function GeneratePage() {
 
         {/* Error */}
         {error && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900 dark:bg-red-950 dark:text-red-400">
+          <div className="mb-5 rounded-xl border-2 border-red-300 bg-red-50 px-4 py-3 text-sm text-red-600">
             {error}
           </div>
         )}
 
-        {/* Captions */}
+        {/* Generated Captions */}
         {captions.length > 0 && (
-          <div>
-            <h2 className="mb-4 text-lg font-semibold text-black dark:text-white">
+          <div className="mb-8">
+            <h2 className="mb-4 text-center text-lg font-bold text-[#9d174d]">
               Generated Captions
             </h2>
             <div className="grid gap-3">
               {captions.map((caption, i) => (
                 <div
                   key={caption.id || i}
-                  className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+                  className="rounded-2xl border-2 border-pink-200 bg-white p-5 shadow-md shadow-pink-100/50"
                 >
-                  <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-                    {caption.content}
-                  </p>
+                  <div className="flex items-start gap-3">
+                    <span className="text-lg">
+                      {["✨", "💫", "🌟", "💖"][i % 4]}
+                    </span>
+                    <p className="text-sm leading-relaxed text-[#4a0e2a]">
+                      {caption.content}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         )}
+
+        {/* Spacer to push tab bar down */}
+        <div className="flex-1" />
+
+        {/* Bottom nav tabs */}
+        <div className="mt-8 flex overflow-hidden rounded-2xl border-2 border-pink-300 bg-white shadow-lg shadow-pink-200/30">
+          <Link
+            href="/love-notes"
+            className="flex flex-1 flex-col items-center gap-1 py-4 text-[#db2777]/60 hover:text-[#db2777] hover:bg-pink-50 text-xs transition-colors"
+          >
+            <span className="text-lg">💖</span>
+            Vote
+          </Link>
+          <div className="w-0.5 bg-pink-200" />
+          <Link
+            href="/generate"
+            className="flex flex-1 flex-col items-center gap-1 bg-pink-100 py-4 text-[#9d174d] font-bold text-xs"
+          >
+            <span className="text-lg">📷</span>
+            Create
+          </Link>
+          <div className="w-0.5 bg-pink-200" />
+          <Link
+            href="/humor-flavors"
+            className="flex flex-1 flex-col items-center gap-1 py-4 text-[#db2777]/60 hover:text-[#db2777] hover:bg-pink-50 text-xs transition-colors"
+          >
+            <span className="text-lg">🎭</span>
+            Flavors
+          </Link>
+        </div>
       </main>
     </div>
   );
