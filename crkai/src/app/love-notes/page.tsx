@@ -9,6 +9,8 @@ interface Caption {
   id: string;
   content: string;
   created_datetime_utc: string;
+  image_id: string | null;
+  image_url: string | null;
 }
 
 interface VoteCounts {
@@ -39,9 +41,10 @@ export default function LoveNotesPage() {
       } = await supabase.auth.getUser();
       setUser(user);
 
+      // Fetch captions with their linked image URL via join
       const { data, error } = await supabase
         .from("captions")
-        .select("id, content, created_datetime_utc")
+        .select("id, content, created_datetime_utc, image_id, images(url)")
         .eq("is_public", true)
         .order("created_datetime_utc", { ascending: false })
         .limit(30);
@@ -54,9 +57,25 @@ export default function LoveNotesPage() {
 
       // Filter out captions that are empty or only emojis/whitespace
       const emojiRegex = /^[\s\p{Emoji}\p{Emoji_Presentation}\p{Emoji_Modifier}\p{Emoji_Modifier_Base}\p{Emoji_Component}\u200d\ufe0f]*$/u;
-      const validCaptions = (data ?? []).filter(
-        (c) => c.content && c.content.trim().length > 0 && !emojiRegex.test(c.content)
-      );
+      const validCaptions = (data ?? [])
+        .filter(
+          (c: Record<string, unknown>) =>
+            c.content &&
+            typeof c.content === "string" &&
+            c.content.trim().length > 0 &&
+            !emojiRegex.test(c.content)
+        )
+        .map((c: Record<string, unknown>) => ({
+          id: c.id as string,
+          content: c.content as string,
+          created_datetime_utc: c.created_datetime_utc as string,
+          image_id: (c.image_id as string) || null,
+          image_url:
+            c.images && typeof c.images === "object" && (c.images as Record<string, unknown>).url
+              ? ((c.images as Record<string, unknown>).url as string)
+              : null,
+        }));
+
       setCaptions(validCaptions);
 
       const ids = validCaptions.map((c) => c.id);
@@ -178,8 +197,6 @@ export default function LoveNotesPage() {
   const myVote = currentCaption ? userVotes[currentCaption.id] ?? null : null;
   const isVoting = currentCaption ? votingId === currentCaption.id : false;
 
-  const emojis = ["💕", "💘", "💌", "🌸", "💗", "✨", "💝", "🎀"];
-
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#fff0f3]">
@@ -291,11 +308,19 @@ export default function LoveNotesPage() {
                 </span>
               </div>
 
+              {/* Image */}
+              {currentCaption.image_url && (
+                <div className="flex items-center justify-center border-b border-pink-100 bg-pink-50/50 p-4">
+                  <img
+                    src={currentCaption.image_url}
+                    alt="Caption image"
+                    className="max-h-64 max-w-full rounded-xl object-contain shadow-md shadow-pink-200/30"
+                  />
+                </div>
+              )}
+
               {/* Card content */}
-              <div className="flex flex-col items-center px-6 py-10 text-center">
-                <span className="mb-4 text-4xl">
-                  {emojis[currentIndex % emojis.length]}
-                </span>
+              <div className="flex flex-col items-center px-6 py-8 text-center">
                 <p className="text-lg leading-relaxed text-[#4a0e2a]">
                   {currentCaption.content ?? ""}
                 </p>
