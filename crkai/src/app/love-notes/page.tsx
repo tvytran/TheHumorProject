@@ -52,9 +52,14 @@ export default function LoveNotesPage() {
         return;
       }
 
-      setCaptions(data ?? []);
+      // Filter out captions that are empty or only emojis/whitespace
+      const emojiRegex = /^[\s\p{Emoji}\p{Emoji_Presentation}\p{Emoji_Modifier}\p{Emoji_Modifier_Base}\p{Emoji_Component}\u200d\ufe0f]*$/u;
+      const validCaptions = (data ?? []).filter(
+        (c) => c.content && c.content.trim().length > 0 && !emojiRegex.test(c.content)
+      );
+      setCaptions(validCaptions);
 
-      const ids = (data ?? []).map((c) => c.id);
+      const ids = validCaptions.map((c) => c.id);
       if (ids.length > 0) {
         try {
           const { data: votes } = await supabase
