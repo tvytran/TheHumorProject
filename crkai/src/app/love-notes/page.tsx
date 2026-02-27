@@ -2,16 +2,45 @@
 
 import { createClient } from "@/lib/supabase";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import type { User } from "@supabase/supabase-js";
 
 const IMAGE_CDN = "https://images.almostcrackd.ai";
+
+function CaptionImage({ profileId, imageId }: { profileId: string; imageId: string }) {
+  const [src, setSrc] = useState(`${IMAGE_CDN}/${profileId}/${imageId}.jpeg`);
+  const [failed, setFailed] = useState(false);
+
+  const handleError = useCallback(() => {
+    if (src.endsWith(".jpeg")) {
+      setSrc(`${IMAGE_CDN}/${profileId}/${imageId}.png`);
+    } else if (src.endsWith(".png")) {
+      setSrc(`${IMAGE_CDN}/${profileId}/${imageId}.webp`);
+    } else {
+      setFailed(true);
+    }
+  }, [src, profileId, imageId]);
+
+  if (failed) return null;
+
+  return (
+    <div className="flex items-center justify-center bg-pink-50/50 p-4">
+      <img
+        src={src}
+        alt="Caption image"
+        onError={handleError}
+        className="max-h-72 max-w-full rounded-xl object-contain shadow-md shadow-pink-200/30"
+      />
+    </div>
+  );
+}
 
 interface Caption {
   id: string;
   content: string;
   created_datetime_utc: string;
-  image_url: string | null;
+  image_id: string | null;
+  profile_id: string | null;
 }
 
 interface VoteCounts {
@@ -70,10 +99,8 @@ export default function LoveNotesPage() {
           id: c.id,
           content: c.content,
           created_datetime_utc: c.created_datetime_utc,
-          image_url:
-            c.image_id && c.profile_id
-              ? `${IMAGE_CDN}/${c.profile_id}/${c.image_id}.jpeg`
-              : null,
+          image_id: c.image_id || null,
+          profile_id: c.profile_id || null,
         }));
 
       setCaptions(validCaptions);
@@ -309,14 +336,12 @@ export default function LoveNotesPage() {
               </div>
 
               {/* Image */}
-              {currentCaption.image_url && (
-                <div className="flex items-center justify-center bg-pink-50/50 p-4">
-                  <img
-                    src={currentCaption.image_url}
-                    alt="Caption image"
-                    className="max-h-72 max-w-full rounded-xl object-contain shadow-md shadow-pink-200/30"
-                  />
-                </div>
+              {currentCaption.image_id && currentCaption.profile_id && (
+                <CaptionImage
+                  key={currentCaption.id}
+                  profileId={currentCaption.profile_id}
+                  imageId={currentCaption.image_id}
+                />
               )}
 
               {/* Caption text */}
