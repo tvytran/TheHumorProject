@@ -46,6 +46,7 @@ export default function LoveNotesPage() {
         .from("captions")
         .select("id, content, created_datetime_utc, image_id, images(url)")
         .eq("is_public", true)
+        .not("content", "is", null)
         .order("created_datetime_utc", { ascending: false })
         .limit(30);
 
