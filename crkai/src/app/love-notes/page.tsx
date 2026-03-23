@@ -166,13 +166,12 @@ export default function LoveNotesPage() {
       return;
     }
 
-    const now = new Date().toISOString();
     const { error } = await supabase.from("caption_votes").insert({
       caption_id: captionId,
       vote_value: voteValue,
       profile_id: user.id,
-      created_datetime_utc: now,
-      modified_datetime_utc: now,
+      created_by_user_id: user.id,
+      modified_by_user_id: user.id,
     });
 
     if (error) {
