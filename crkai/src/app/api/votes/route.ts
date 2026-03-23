@@ -23,6 +23,8 @@ export async function POST(request: Request) {
     caption_id,
     vote_value,
     profile_id: user.id,
+    created_by_user_id: user.id,
+    modified_by_user_id: user.id,
   });
 
   if (error) {
