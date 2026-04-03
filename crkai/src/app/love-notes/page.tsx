@@ -166,13 +166,16 @@ export default function LoveNotesPage() {
       return;
     }
 
-    const { error } = await supabase.from("caption_votes").insert({
-      caption_id: captionId,
-      vote_value: voteValue,
-      profile_id: user.id,
-      created_by_user_id: user.id,
-      modified_by_user_id: user.id,
-    });
+    const { error } = await supabase.from("caption_votes").upsert(
+      {
+        caption_id: captionId,
+        vote_value: voteValue,
+        profile_id: user.id,
+        created_by_user_id: user.id,
+        modified_by_user_id: user.id,
+      },
+      { onConflict: "caption_id,profile_id" }
+    );
 
     if (error) {
       console.error("Vote insert error:", error.message, error.code, error.details);

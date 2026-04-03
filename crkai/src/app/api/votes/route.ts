@@ -19,13 +19,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
-  const { data, error } = await supabase.from("caption_votes").insert({
-    caption_id,
-    vote_value,
-    profile_id: user.id,
-    created_by_user_id: user.id,
-    modified_by_user_id: user.id,
-  });
+  const { data, error } = await supabase.from("caption_votes").upsert(
+    {
+      caption_id,
+      vote_value,
+      profile_id: user.id,
+      created_by_user_id: user.id,
+      modified_by_user_id: user.id,
+    },
+    { onConflict: "caption_id,profile_id" }
+  );
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
