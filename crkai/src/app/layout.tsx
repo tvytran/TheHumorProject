@@ -23,7 +23,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Load theme before paint to avoid flash — user study feedback:
+            some users felt the pink theme was too feminine, so we offer
+            a neutral alternative that persists in localStorage. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('crkai-theme');if(t==='neutral'){document.documentElement.setAttribute('data-theme','neutral');}}catch(e){}`,
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

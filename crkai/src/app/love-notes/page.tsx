@@ -4,12 +4,33 @@ import { createClient } from "@/lib/supabase";
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
 import type { User } from "@supabase/supabase-js";
+import ThemeToggle from "../ThemeToggle";
 
 const IMAGE_CDN = "https://images.almostcrackd.ai";
 
-function CaptionImage({ profileId, imageId }: { profileId: string; imageId: string }) {
+// User-study feedback: image loading was slow and made the app feel
+// sluggish. CaptionImage now (1) shows a skeleton placeholder until the
+// image is fully decoded, (2) uses native lazy decoding, and (3) reserves
+// vertical space so layout doesn't jump on load.
+function CaptionImage({
+  profileId,
+  imageId,
+  eager = false,
+}: {
+  profileId: string;
+  imageId: string;
+  eager?: boolean;
+}) {
   const [src, setSrc] = useState(`${IMAGE_CDN}/${profileId}/${imageId}.jpeg`);
   const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  // Reset loaded state when image identity changes (navigation)
+  useEffect(() => {
+    setSrc(`${IMAGE_CDN}/${profileId}/${imageId}.jpeg`);
+    setFailed(false);
+    setLoaded(false);
+  }, [profileId, imageId]);
 
   const handleError = useCallback(() => {
     if (src.endsWith(".jpeg")) {
@@ -24,12 +45,21 @@ function CaptionImage({ profileId, imageId }: { profileId: string; imageId: stri
   if (failed) return null;
 
   return (
-    <div className="flex items-center justify-center bg-pink-50/50 p-4">
+    <div className="relative flex h-72 items-center justify-center bg-pink-50/50 p-4">
+      {!loaded && (
+        <div className="image-skeleton absolute inset-4 rounded-xl" />
+      )}
       <img
         src={src}
         alt="Caption image"
         onError={handleError}
-        className="max-h-72 max-w-full rounded-xl object-contain shadow-md shadow-pink-200/30"
+        onLoad={() => setLoaded(true)}
+        loading={eager ? "eager" : "lazy"}
+        decoding="async"
+        fetchPriority={eager ? "high" : "low"}
+        className={`max-h-64 max-w-full rounded-xl object-contain shadow-md shadow-pink-200/30 transition-opacity duration-300 ${
+          loaded ? "opacity-100" : "opacity-0"
+        }`}
       />
     </div>
   );
@@ -219,6 +249,16 @@ export default function LoveNotesPage() {
     }
   }
 
+  // Preload the next caption's image so navigation feels instant.
+  // Addresses user-study feedback that image loading felt slow.
+  useEffect(() => {
+    const next = captions[currentIndex + 1];
+    if (next?.image_id && next?.profile_id) {
+      const img = new Image();
+      img.src = `${IMAGE_CDN}/${next.profile_id}/${next.image_id}.jpeg`;
+    }
+  }, [currentIndex, captions]);
+
   const currentCaption = captions[currentIndex];
   const counts = currentCaption
     ? voteCounts[currentCaption.id] ?? { upvotes: 0, downvotes: 0 }
@@ -248,7 +288,7 @@ export default function LoveNotesPage() {
   return (
     <div className="min-h-screen bg-[#fff0f3] font-sans">
       {/* Hearts background */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+      <div className="theme-decorations pointer-events-none fixed inset-0 overflow-hidden">
         {Array.from({ length: 20 }).map((_, i) => (
           <span
             key={i}
@@ -270,26 +310,29 @@ export default function LoveNotesPage() {
           <Link href="/" className="text-sm font-medium text-[#db2777] hover:text-[#9d174d]">
             &larr; Home
           </Link>
-          {user ? (
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-[#be185d]">
-                {user.user_metadata?.full_name || user.email}
-              </span>
-              <button
-                onClick={handleSignOut}
-                className="rounded-full border-2 border-pink-300 bg-white px-3 py-1 text-xs font-bold text-[#be185d] transition-colors hover:bg-pink-50"
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            {user ? (
+              <div className="flex items-center gap-3">
+                <span className="hidden text-xs text-[#be185d] sm:inline">
+                  {user.user_metadata?.full_name || user.email}
+                </span>
+                <button
+                  onClick={handleSignOut}
+                  className="rounded-full border-2 border-pink-300 bg-white px-3 py-1 text-xs font-bold text-[#be185d] transition-colors hover:bg-pink-50"
+                >
+                  Sign out
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="rounded-full bg-[#ec4899] px-4 py-1.5 text-xs font-bold text-white shadow-md shadow-pink-200 hover:bg-[#db2777]"
               >
-                Sign out
-              </button>
-            </div>
-          ) : (
-            <Link
-              href="/login"
-              className="rounded-full bg-[#ec4899] px-4 py-1.5 text-xs font-bold text-white shadow-md shadow-pink-200 hover:bg-[#db2777]"
-            >
-              Sign in to vote
-            </Link>
-          )}
+                Sign in to vote
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Title */}
@@ -301,6 +344,13 @@ export default function LoveNotesPage() {
           <p className="mt-1 text-sm text-[#be185d]/60">
             One at a time — upvote or downvote each caption
           </p>
+          {/* Data transparency — user-study feedback: testers asked
+              "where is the information sent to?" */}
+          <div className="mx-auto mt-4 max-w-sm rounded-2xl border border-pink-200 bg-white/70 px-4 py-2 text-[11px] leading-snug text-[#be185d]/80 backdrop-blur-sm">
+            🔒 Your votes are stored anonymously in our research database
+            and used only to study what makes campus humor land. They are
+            never sold or shared.
+          </div>
         </div>
 
         {/* Caption Card - One at a time */}
@@ -343,6 +393,7 @@ export default function LoveNotesPage() {
                   key={currentCaption.id}
                   profileId={currentCaption.profile_id}
                   imageId={currentCaption.image_id}
+                  eager
                 />
               )}
 

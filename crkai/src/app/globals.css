@@ -28,3 +28,45 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Neutral theme overrides — user study feedback: pink was praised but
+   felt too feminine to some users. Toggle swaps arbitrary-hex Tailwind
+   classes to a neutral slate palette without touching every file. */
+html[data-theme="neutral"] .bg-\[\#fff0f3\] { background-color: #f1f5f9 !important; }
+html[data-theme="neutral"] .bg-\[\#ec4899\] { background-color: #475569 !important; }
+html[data-theme="neutral"] .bg-\[\#db2777\] { background-color: #334155 !important; }
+html[data-theme="neutral"] .bg-\[\#be185d\] { background-color: #1e293b !important; }
+html[data-theme="neutral"] .text-\[\#9d174d\] { color: #0f172a !important; }
+html[data-theme="neutral"] .text-\[\#be185d\] { color: #334155 !important; }
+html[data-theme="neutral"] .text-\[\#db2777\] { color: #475569 !important; }
+html[data-theme="neutral"] .text-\[\#f472a8\] { color: #64748b !important; }
+html[data-theme="neutral"] .text-\[\#4a0e2a\] { color: #0f172a !important; }
+html[data-theme="neutral"] .hover\:bg-\[\#db2777\]:hover { background-color: #1e293b !important; }
+html[data-theme="neutral"] .hover\:text-\[\#9d174d\]:hover { color: #0f172a !important; }
+
+/* Opacity-variant classes used throughout the app */
+html[data-theme="neutral"] [class*="text-[#be185d]/"] { color: #475569 !important; }
+html[data-theme="neutral"] [class*="text-[#db2777]/"] { color: #64748b !important; }
+html[data-theme="neutral"] [class*="border-pink-"] { border-color: #cbd5e1 !important; }
+html[data-theme="neutral"] .bg-pink-50 { background-color: #f1f5f9 !important; }
+html[data-theme="neutral"] .bg-pink-100 { background-color: #e2e8f0 !important; }
+html[data-theme="neutral"] [class*="bg-pink-"] { background-color: #e2e8f0 !important; }
+
+/* Hide decorative floating-heart / sparkle layer entirely in neutral theme */
+html[data-theme="neutral"] .theme-decorations { display: none !important; }
+
+/* Image skeleton shimmer — user study feedback: images loaded slowly
+   and felt sluggish, so give a calm loading placeholder. */
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.image-skeleton {
+  background: linear-gradient(90deg, #ffe0e8 0%, #fff0f3 50%, #ffe0e8 100%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+html[data-theme="neutral"] .image-skeleton {
+  background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
+  background-size: 800px 100%;
+}

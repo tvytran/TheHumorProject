@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
+import ThemeToggle from "./ThemeToggle";
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
@@ -23,7 +24,7 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-[#fff0f3] font-sans">
       {/* Floating hearts background */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+      <div className="theme-decorations pointer-events-none fixed inset-0 overflow-hidden">
         {Array.from({ length: 15 }).map((_, i) => (
           <span
             key={i}
@@ -54,6 +55,7 @@ export default function Home() {
           <Link href="/generate" className="hover:text-[#9d174d] transition-colors">
             Create
           </Link>
+          <ThemeToggle />
           {user ? (
             <button
               onClick={handleSignOut}
@@ -106,6 +108,57 @@ export default function Home() {
           </Link>
         </div>
       </main>
+
+      {/* How it works — added after user study showed all 3 testers
+          needed verbal explanation to understand what the app does */}
+      <section className="relative z-10 mx-auto w-full max-w-5xl px-6 pt-16">
+        <div className="rounded-3xl border-2 border-pink-200 bg-white/80 p-8 backdrop-blur-sm">
+          <h2 className="text-center text-xl font-bold text-[#9d174d] sm:text-2xl">
+            How it works
+          </h2>
+          <p className="mx-auto mt-2 max-w-xl text-center text-sm text-[#be185d]/70">
+            The Humor Project collects funny captions from Columbia &amp; Barnard
+            students to study what makes campus humor land. Here&apos;s the loop:
+          </p>
+          <div className="mt-6 grid gap-4 sm:grid-cols-3">
+            <div className="rounded-2xl bg-pink-50 p-5 text-center">
+              <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[#ec4899] text-base font-bold text-white">
+                1
+              </div>
+              <h3 className="text-sm font-bold text-[#9d174d]">Upload a photo</h3>
+              <p className="mt-1 text-xs leading-relaxed text-[#be185d]/70">
+                Snap a campus moment and let our AI write a few caption options.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-pink-50 p-5 text-center">
+              <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[#ec4899] text-base font-bold text-white">
+                2
+              </div>
+              <h3 className="text-sm font-bold text-[#9d174d]">Vote on captions</h3>
+              <p className="mt-1 text-xs leading-relaxed text-[#be185d]/70">
+                Browse one caption at a time. Upvote the funny ones, downvote the duds.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-pink-50 p-5 text-center">
+              <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[#ec4899] text-base font-bold text-white">
+                3
+              </div>
+              <h3 className="text-sm font-bold text-[#9d174d]">Help us learn</h3>
+              <p className="mt-1 text-xs leading-relaxed text-[#be185d]/70">
+                Your votes feed a research dataset on humor — used only for the
+                study, never sold or shared.
+              </p>
+            </div>
+          </div>
+          <p className="mt-5 text-center text-xs text-[#be185d]/60">
+            New here? Start by{" "}
+            <Link href="/love-notes" className="font-semibold text-[#db2777] underline">
+              voting on a few captions
+            </Link>
+            {" "}— no account needed to browse.
+          </p>
+        </div>
+      </section>
 
       {/* Feature Cards */}
       <section className="relative z-10 mx-auto w-full max-w-5xl px-6 pb-20 pt-16">
