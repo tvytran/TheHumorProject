@@ -137,10 +137,17 @@ export default function GeneratePage() {
       });
 
       if (!step4Res.ok) {
-        throw new Error(`Failed to generate captions (${step4Res.status})`);
+        const errText = await step4Res.text();
+        throw new Error(errText || `Failed to generate captions (${step4Res.status})`);
       }
 
-      const captionData = await step4Res.json();
+      const responseText = await step4Res.text();
+      let captionData;
+      try {
+        captionData = JSON.parse(responseText);
+      } catch {
+        throw new Error(responseText || "Caption API returned an invalid response");
+      }
       setCaptions(Array.isArray(captionData) ? captionData : [captionData]);
       setStatus("");
     } catch (err) {
