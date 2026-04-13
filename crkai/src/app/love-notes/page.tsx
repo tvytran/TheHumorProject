@@ -84,67 +84,84 @@ export default function LoveNotesPage() {
       } = await supabase.auth.getUser();
       setUser(user);
 
-      // Fetch captions
-      const { data, error } = await supabase
-        .from("captions")
-        .select("id, content, created_datetime_utc, image_id")
-        .eq("is_public", true)
-        .not("content", "is", null)
-        .order("created_datetime_utc", { ascending: false })
-        .limit(30);
+      // Fetch captions and all images in parallel to reduce load time
+      const [captionRes, imageRes] = await Promise.all([
+        supabase
+          .from("captions")
+          .select("id, content, created_datetime_utc, image_id")
+          .eq("is_public", true)
+          .not("content", "is", null)
+          .order("created_datetime_utc", { ascending: false })
+          .limit(30),
+        supabase
+          .from("images")
+          .select("id, url"),
+      ]);
 
-      if (error) {
-        setError(error.message);
+      if (captionRes.error) {
+        setError(captionRes.error.message);
         setLoading(false);
         return;
       }
 
+      // Build image URL lookup
+      const imageUrlMap: Record<string, string> = {};
+      imageRes.data?.forEach((img: { id: string; url: string }) => {
+        if (img.url) imageUrlMap[img.id] = img.url;
+      });
+
       // Filter out captions that are empty or only emojis/whitespace
       const emojiRegex = /^[\s\p{Emoji}\p{Emoji_Presentation}\p{Emoji_Modifier}\p{Emoji_Modifier_Base}\p{Emoji_Component}\u200d\ufe0f]*$/u;
-      const filteredData = (data ?? []).filter(
-        (c) =>
-          c.content &&
-          c.content.trim().length > 0 &&
-          !emojiRegex.test(c.content)
-      );
-
-      // Fetch image URLs from the images table for all referenced image_ids
-      const imageIds = filteredData
-        .map((c) => c.image_id)
-        .filter((id): id is string => !!id);
-      const imageUrlMap: Record<string, string> = {};
-      if (imageIds.length > 0) {
-        const { data: images } = await supabase
-          .from("images")
-          .select("id, url")
-          .in("id", imageIds);
-        images?.forEach((img: { id: string; url: string }) => {
-          if (img.url) imageUrlMap[img.id] = img.url;
-        });
-      }
-
-      const validCaptions: Caption[] = filteredData.map((c) => ({
-        id: c.id,
-        content: c.content,
-        created_datetime_utc: c.created_datetime_utc,
-        image_url: (c.image_id && imageUrlMap[c.image_id]) || null,
-      }));
+      const validCaptions: Caption[] = (captionRes.data ?? [])
+        .filter(
+          (c) =>
+            c.content &&
+            c.content.trim().length > 0 &&
+            !emojiRegex.test(c.content)
+        )
+        .map((c) => ({
+          id: c.id,
+          content: c.content,
+          created_datetime_utc: c.created_datetime_utc,
+          image_url: (c.image_id && imageUrlMap[c.image_id]) || null,
+        }));
 
       setCaptions(validCaptions);
 
+      // Start preloading the first few images immediately
+      validCaptions.slice(0, 3).forEach((c) => {
+        if (c.image_url) {
+          const img = new Image();
+          img.src = c.image_url;
+        }
+      });
+
+      // Fetch all votes and user's votes in parallel
       const ids = validCaptions.map((c) => c.id);
       if (ids.length > 0) {
         try {
-          const { data: votes } = await supabase
+          const allVotesPromise = supabase
             .from("caption_votes")
             .select("caption_id, vote_value")
             .in("caption_id", ids);
+          const myVotesPromise = user
+            ? supabase
+                .from("caption_votes")
+                .select("caption_id, vote_value")
+                .eq("profile_id", user.id)
+                .in("caption_id", ids)
+            : null;
+
+          const [allVotesRes, myVotesRes] = await Promise.all([
+            allVotesPromise,
+            myVotesPromise,
+          ]);
 
           const counts: VoteCounts = {};
           for (const id of ids) {
             counts[id] = { upvotes: 0, downvotes: 0 };
           }
-          for (const v of votes ?? []) {
+          for (const v of allVotesRes.data ?? []) {
             if (counts[v.caption_id]) {
               if (v.vote_value === 1) counts[v.caption_id].upvotes++;
               else if (v.vote_value === -1) counts[v.caption_id].downvotes++;
@@ -152,16 +169,10 @@ export default function LoveNotesPage() {
           }
           setVoteCounts(counts);
 
-          if (user) {
-            const { data: myVotes } = await supabase
-              .from("caption_votes")
-              .select("caption_id, vote_value")
-              .eq("profile_id", user.id)
-              .in("caption_id", ids);
-
+          if (myVotesRes?.data) {
             const uv: UserVotes = {};
-            for (const v of myVotes ?? []) {
-              uv[v.caption_id] = v.vote_value;
+            for (const v of myVotesRes.data) {
+              uv[v.caption_id] = v.vote_value as 1 | -1;
             }
             setUserVotes(uv);
           }
@@ -246,13 +257,14 @@ export default function LoveNotesPage() {
     }
   }
 
-  // Preload the next caption's image so navigation feels instant.
-  // Addresses user-study feedback that image loading felt slow.
+  // Preload the next few images so navigation feels instant.
   useEffect(() => {
-    const next = captions[currentIndex + 1];
-    if (next?.image_url) {
-      const img = new Image();
-      img.src = next.image_url;
+    for (let i = 1; i <= 3; i++) {
+      const upcoming = captions[currentIndex + i];
+      if (upcoming?.image_url) {
+        const img = new Image();
+        img.src = upcoming.image_url;
+      }
     }
   }, [currentIndex, captions]);
 
