@@ -2,45 +2,29 @@
 
 import { createClient } from "@/lib/supabase";
 import Link from "next/link";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import ThemeToggle from "../ThemeToggle";
-
-const IMAGE_CDN = "https://images.almostcrackd.ai";
 
 // User-study feedback: image loading was slow and made the app feel
 // sluggish. CaptionImage now (1) shows a skeleton placeholder until the
 // image is fully decoded, (2) uses native lazy decoding, and (3) reserves
 // vertical space so layout doesn't jump on load.
 function CaptionImage({
-  profileId,
-  imageId,
+  imageUrl,
   eager = false,
 }: {
-  profileId: string;
-  imageId: string;
+  imageUrl: string;
   eager?: boolean;
 }) {
-  const [src, setSrc] = useState(`${IMAGE_CDN}/${profileId}/${imageId}.jpeg`);
   const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
-  // Reset loaded state when image identity changes (navigation)
+  // Reset loaded state when image URL changes (navigation)
   useEffect(() => {
-    setSrc(`${IMAGE_CDN}/${profileId}/${imageId}.jpeg`);
     setFailed(false);
     setLoaded(false);
-  }, [profileId, imageId]);
-
-  const handleError = useCallback(() => {
-    if (src.endsWith(".jpeg")) {
-      setSrc(`${IMAGE_CDN}/${profileId}/${imageId}.png`);
-    } else if (src.endsWith(".png")) {
-      setSrc(`${IMAGE_CDN}/${profileId}/${imageId}.webp`);
-    } else {
-      setFailed(true);
-    }
-  }, [src, profileId, imageId]);
+  }, [imageUrl]);
 
   if (failed) return null;
 
@@ -50,9 +34,9 @@ function CaptionImage({
         <div className="image-skeleton absolute inset-4 rounded-xl" />
       )}
       <img
-        src={src}
+        src={imageUrl}
         alt="Caption image"
-        onError={handleError}
+        onError={() => setFailed(true)}
         onLoad={() => setLoaded(true)}
         loading={eager ? "eager" : "lazy"}
         decoding="async"
@@ -69,8 +53,7 @@ interface Caption {
   id: string;
   content: string;
   created_datetime_utc: string;
-  image_id: string | null;
-  profile_id: string | null;
+  image_url: string | null;
 }
 
 interface VoteCounts {
@@ -101,10 +84,10 @@ export default function LoveNotesPage() {
       } = await supabase.auth.getUser();
       setUser(user);
 
-      // Fetch captions with image_id and profile_id to construct CDN URL
+      // Fetch captions
       const { data, error } = await supabase
         .from("captions")
-        .select("id, content, created_datetime_utc, image_id, profile_id")
+        .select("id, content, created_datetime_utc, image_id")
         .eq("is_public", true)
         .not("content", "is", null)
         .order("created_datetime_utc", { ascending: false })
@@ -118,20 +101,34 @@ export default function LoveNotesPage() {
 
       // Filter out captions that are empty or only emojis/whitespace
       const emojiRegex = /^[\s\p{Emoji}\p{Emoji_Presentation}\p{Emoji_Modifier}\p{Emoji_Modifier_Base}\p{Emoji_Component}\u200d\ufe0f]*$/u;
-      const validCaptions: Caption[] = (data ?? [])
-        .filter(
-          (c) =>
-            c.content &&
-            c.content.trim().length > 0 &&
-            !emojiRegex.test(c.content)
-        )
-        .map((c) => ({
-          id: c.id,
-          content: c.content,
-          created_datetime_utc: c.created_datetime_utc,
-          image_id: c.image_id || null,
-          profile_id: c.profile_id || null,
-        }));
+      const filteredData = (data ?? []).filter(
+        (c) =>
+          c.content &&
+          c.content.trim().length > 0 &&
+          !emojiRegex.test(c.content)
+      );
+
+      // Fetch image URLs from the images table for all referenced image_ids
+      const imageIds = filteredData
+        .map((c) => c.image_id)
+        .filter((id): id is string => !!id);
+      const imageUrlMap: Record<string, string> = {};
+      if (imageIds.length > 0) {
+        const { data: images } = await supabase
+          .from("images")
+          .select("id, url")
+          .in("id", imageIds);
+        images?.forEach((img: { id: string; url: string }) => {
+          if (img.url) imageUrlMap[img.id] = img.url;
+        });
+      }
+
+      const validCaptions: Caption[] = filteredData.map((c) => ({
+        id: c.id,
+        content: c.content,
+        created_datetime_utc: c.created_datetime_utc,
+        image_url: (c.image_id && imageUrlMap[c.image_id]) || null,
+      }));
 
       setCaptions(validCaptions);
 
@@ -253,9 +250,9 @@ export default function LoveNotesPage() {
   // Addresses user-study feedback that image loading felt slow.
   useEffect(() => {
     const next = captions[currentIndex + 1];
-    if (next?.image_id && next?.profile_id) {
+    if (next?.image_url) {
       const img = new Image();
-      img.src = `${IMAGE_CDN}/${next.profile_id}/${next.image_id}.jpeg`;
+      img.src = next.image_url;
     }
   }, [currentIndex, captions]);
 
@@ -388,11 +385,10 @@ export default function LoveNotesPage() {
               </div>
 
               {/* Image */}
-              {currentCaption.image_id && currentCaption.profile_id && (
+              {currentCaption.image_url && (
                 <CaptionImage
                   key={currentCaption.id}
-                  profileId={currentCaption.profile_id}
-                  imageId={currentCaption.image_id}
+                  imageUrl={currentCaption.image_url}
                   eager
                 />
               )}
