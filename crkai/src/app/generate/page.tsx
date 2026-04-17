@@ -21,6 +21,12 @@ interface GeneratedCaption {
   [key: string]: unknown;
 }
 
+interface HumorFlavor {
+  id: string;
+  slug: string;
+  description: string | null;
+}
+
 export default function GeneratePage() {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -30,6 +36,8 @@ export default function GeneratePage() {
   const [captions, setCaptions] = useState<GeneratedCaption[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [flavors, setFlavors] = useState<HumorFlavor[]>([]);
+  const [selectedFlavorId, setSelectedFlavorId] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const supabase = createClient();
@@ -46,6 +54,16 @@ export default function GeneratePage() {
       } = await supabase.auth.getSession();
       if (session) {
         setToken(session.access_token);
+      }
+
+      // Fetch humor flavors
+      const { data: flavorData } = await supabase
+        .from("humor_flavors")
+        .select("id, slug, description")
+        .order("created_datetime_utc", { ascending: false });
+      if (flavorData && flavorData.length > 0) {
+        setFlavors(flavorData);
+        setSelectedFlavorId(String(flavorData[0].id));
       }
     }
     init();
@@ -123,17 +141,21 @@ export default function GeneratePage() {
         throw new Error(`Failed to register image (${step3Res.status})`);
       }
 
-      const { imageId } = await step3Res.json();
+      const step3Data = await step3Res.json();
+      const { imageId } = step3Data;
+      console.log("[generate] step3 response:", step3Data);
+      console.log("[generate] imageId:", imageId);
 
       // Step 4: Generate captions
       setStatus("Generating captions...");
+      console.log("[generate] sending to generate-captions:", { imageId, humorFlavorId: selectedFlavorId });
       const step4Res = await fetch(`${API_BASE}/pipeline/generate-captions`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ imageId }),
+        body: JSON.stringify({ imageId, humorFlavorId: selectedFlavorId }),
       });
 
       if (!step4Res.ok) {
@@ -266,10 +288,37 @@ export default function GeneratePage() {
           </div>
         </div>
 
+        {/* Humor Flavor selector */}
+        {flavors.length > 0 && (
+          <div className="mb-5 overflow-hidden rounded-2xl border-2 border-pink-300 bg-white shadow-lg shadow-pink-200/30">
+            <div className="flex items-center justify-between border-b-2 border-pink-200 bg-gradient-to-r from-pink-100 to-pink-50 px-5 py-3">
+              <div className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-full bg-pink-300" />
+                <span className="h-3 w-3 rounded-full bg-pink-200" />
+                <span className="h-3 w-3 rounded-full bg-pink-100" />
+              </div>
+              <span className="text-xs font-bold text-[#be185d]">humor flavor</span>
+            </div>
+            <div className="p-4">
+              <select
+                value={selectedFlavorId}
+                onChange={(e) => setSelectedFlavorId(e.target.value)}
+                className="w-full rounded-xl border-2 border-pink-200 bg-pink-50 px-3 py-2 text-sm text-[#4a0e2a] focus:border-pink-400 focus:outline-none"
+              >
+                {flavors.map((f) => (
+                  <option key={f.id} value={String(f.id)}>
+                    {f.slug}{f.description ? ` — ${f.description.slice(0, 60)}` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+
         {/* Generate button */}
         <button
           onClick={handleGenerate}
-          disabled={!file || loading}
+          disabled={!file || loading || !selectedFlavorId}
           className={`mb-5 w-full rounded-full px-6 py-3.5 text-sm font-bold transition-all ${
             file && !loading
               ? "bg-[#ec4899] text-white hover:bg-[#db2777] shadow-lg shadow-pink-300/40 hover:shadow-pink-400/50 hover:scale-[1.02]"
