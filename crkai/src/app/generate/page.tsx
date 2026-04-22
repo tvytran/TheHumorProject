@@ -90,7 +90,7 @@ export default function GeneratePage() {
   }
 
   async function handleGenerate() {
-    if (!file || !token) return;
+    if (!file || !token || !selectedFlavorId) return;
 
     setLoading(true);
     setError(null);
@@ -143,12 +143,9 @@ export default function GeneratePage() {
 
       const step3Data = await step3Res.json();
       const { imageId } = step3Data;
-      console.log("[generate] step3 response:", step3Data);
-      console.log("[generate] imageId:", imageId);
 
       // Step 4: Generate captions
       setStatus("Generating captions...");
-      console.log("[generate] sending to generate-captions:", { imageId, humorFlavorId: selectedFlavorId });
       const step4Res = await fetch(`${API_BASE}/pipeline/generate-captions`, {
         method: "POST",
         headers: {
