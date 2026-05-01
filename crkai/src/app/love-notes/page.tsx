@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase";
 import Link from "next/link";
+import NextImage from "next/image";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import ThemeToggle from "../ThemeToggle";
@@ -33,14 +34,14 @@ function CaptionImage({
       {!loaded && (
         <div className="image-skeleton absolute inset-4 rounded-xl" />
       )}
-      <img
+      <NextImage
         src={imageUrl}
         alt="Caption image"
+        width={480}
+        height={256}
         onError={() => setFailed(true)}
         onLoad={() => setLoaded(true)}
-        loading={eager ? "eager" : "lazy"}
-        decoding="async"
-        fetchPriority={eager ? "high" : "low"}
+        priority={eager}
         className={`max-h-64 max-w-full rounded-xl object-contain shadow-md shadow-pink-200/30 transition-opacity duration-300 ${
           loaded ? "opacity-100" : "opacity-0"
         }`}
