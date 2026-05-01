@@ -167,7 +167,17 @@ export default function GeneratePage() {
       } catch {
         throw new Error(responseText || "Caption API returned an invalid response");
       }
-      setCaptions(Array.isArray(captionData) ? captionData : [captionData]);
+      const captionArray = Array.isArray(captionData) ? captionData : [captionData];
+      setCaptions(captionArray);
+
+      // Make captions public so they appear in the voting feed
+      const captionIds = captionArray.map((c: GeneratedCaption) => c.id).filter(Boolean);
+      if (captionIds.length > 0) {
+        await supabase
+          .from("captions")
+          .update({ is_public: true })
+          .in("id", captionIds);
+      }
       setStatus("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
