@@ -91,6 +91,7 @@ export default function LoveNotesPage() {
         .select("id, content, created_datetime_utc, image_id")
         .eq("is_public", true)
         .not("content", "is", null)
+        .not("image_id", "is", null)
         .order("created_datetime_utc", { ascending: false })
         .limit(30);
 
