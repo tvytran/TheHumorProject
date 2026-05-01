@@ -92,8 +92,7 @@ export default function LoveNotesPage() {
         .eq("is_public", true)
         .not("content", "is", null)
         .not("image_id", "is", null)
-        .order("created_datetime_utc", { ascending: false })
-        .limit(30);
+        .limit(50);
 
       if (captionRes.error) {
         setError(captionRes.error.message);
@@ -133,7 +132,9 @@ export default function LoveNotesPage() {
           image_url: (c.image_id && imageUrlMap[c.image_id]) || null,
         }));
 
-      setCaptions(validCaptions);
+      // Shuffle so users see different captions each visit
+      const shuffled = [...validCaptions].sort(() => Math.random() - 0.5);
+      setCaptions(shuffled);
 
       // Start preloading the first few images immediately
       validCaptions.slice(0, 3).forEach((c) => {
