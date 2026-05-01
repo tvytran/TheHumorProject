@@ -171,12 +171,14 @@ export default function GeneratePage() {
       setCaptions(captionArray);
 
       // Make captions public so they appear in the voting feed
+      // Uses a server-side admin route to bypass RLS
       const captionIds = captionArray.map((c: GeneratedCaption) => c.id).filter(Boolean);
       if (captionIds.length > 0) {
-        await supabase
-          .from("captions")
-          .update({ is_public: true })
-          .in("id", captionIds);
+        await fetch("/api/captions/publish", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ captionIds }),
+        });
       }
       setStatus("");
     } catch (err) {
