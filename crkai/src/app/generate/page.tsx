@@ -134,7 +134,7 @@ export default function GeneratePage() {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ imageUrl: cdnUrl, isCommonUse: false }),
+        body: JSON.stringify({ imageUrl: cdnUrl, isCommonUse: false, isPublic: true }),
       });
 
       if (!step3Res.ok) {
@@ -152,7 +152,7 @@ export default function GeneratePage() {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ imageId, humorFlavorId: selectedFlavorId }),
+        body: JSON.stringify({ imageId, humorFlavorId: selectedFlavorId, isPublic: true }),
       });
 
       if (!step4Res.ok) {
