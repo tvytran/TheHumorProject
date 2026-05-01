@@ -84,25 +84,30 @@ export default function LoveNotesPage() {
       } = await supabase.auth.getUser();
       setUser(user);
 
-      // Fetch captions and all images in parallel to reduce load time
-      const [captionRes, imageRes] = await Promise.all([
-        supabase
-          .from("captions")
-          .select("id, content, created_datetime_utc, image_id")
-          .eq("is_public", true)
-          .not("content", "is", null)
-          .order("created_datetime_utc", { ascending: false })
-          .limit(30),
-        supabase
-          .from("images")
-          .select("id, url"),
-      ]);
+      // Fetch captions first, then only fetch the images we actually need
+      const captionRes = await supabase
+        .from("captions")
+        .select("id, content, created_datetime_utc, image_id")
+        .eq("is_public", true)
+        .not("content", "is", null)
+        .order("created_datetime_utc", { ascending: false })
+        .limit(30);
 
       if (captionRes.error) {
         setError(captionRes.error.message);
         setLoading(false);
         return;
       }
+
+      // Collect only the image IDs referenced by these captions
+      const imageIds = [...new Set(
+        (captionRes.data ?? []).map((c) => c.image_id).filter(Boolean)
+      )];
+
+      // Fetch only those specific images — avoids the 1000-row default cap
+      const imageRes = imageIds.length > 0
+        ? await supabase.from("images").select("id, url").in("id", imageIds)
+        : { data: [] };
 
       // Build image URL lookup
       const imageUrlMap: Record<string, string> = {};
